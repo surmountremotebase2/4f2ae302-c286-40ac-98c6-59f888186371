@@ -4,7 +4,7 @@ from surmount.base_class import Strategy
 
 class TradingStrategy(Strategy):
     def __init__(self):
-        self.name = "White Line Strategy PRO – ML Scoring"
+        self.name = "White Line Strategy PRO - ML Scoring"
         self.score_limit = 7
         self.sl_offset = 0.005  # 0.5%
         self.in_trade = False
@@ -12,11 +12,11 @@ class TradingStrategy(Strategy):
 
     @property
     def assets(self):
-        return ["SPY"]  # You can change to any valid ticker
+        return ["SPY"]  # Change this if needed
 
     @property
     def interval(self):
-        return "daily"  # Use "daily", not "1d", to match Surmount expectations
+        return "1h"  # Use "1h" or "5min" — avoid "1d" or "daily"
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
