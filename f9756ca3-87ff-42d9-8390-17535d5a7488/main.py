@@ -5,17 +5,19 @@ from surmount.base_class import Strategy
 
 class TradingStrategy(Strategy):
     def __init__(self):
-        self.name = "White Line Strategy PRO - Clean Function Syntax"
+        self.name = "White Line Strategy PRO - Final Fix"
         self.score_limit = 7
         self.sl_offset = 0.005
         self.in_trade = False
         self.stop_price = None
 
+    @property
     def assets(self):
-        return ["SPY"]  # ✅ MUST be method
+        return ["SPY"]  # ✅ Return list of tickers
 
+    @property
     def interval(self):
-        return "1d"     # ✅ MUST be method
+        return "1d"     # ✅ Must be string, not method
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
