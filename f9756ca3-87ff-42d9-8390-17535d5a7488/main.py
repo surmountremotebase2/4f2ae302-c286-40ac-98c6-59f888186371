@@ -5,16 +5,12 @@ from surmount.base_class import Strategy
 class TradingStrategy(Strategy):
     def __init__(self):
         self.name = "White Line Strategy PRO - ML Scoring"
+        self.assets = ["SPY"]
+        self.interval = "1440min"  # ← FIX: now set as an attribute, not a method
         self.score_limit = 7
-        self.sl_offset = 0.005  # 0.5%
+        self.sl_offset = 0.005
         self.in_trade = False
         self.stop_price = None
-
-    def assets(self):
-        return ["SPY"]
-
-    def interval(self):
-        return "1440min"  # ← Use this for daily candles on Surmount
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
