@@ -6,17 +6,17 @@ class TradingStrategy(Strategy):
     def __init__(self):
         self.name = "White Line Strategy PRO – ML Scoring"
         self.score_limit = 7
-        self.sl_offset = 0.5 / 100  # 0.5%
+        self.sl_offset = 0.005  # 0.5%
         self.in_trade = False
         self.stop_price = None
 
     @property
     def assets(self):
-        return ["SPY"]  # Replace with your desired ticker(s)
+        return ["SPY"]  # You can change this to other tickers
 
     @property
     def interval(self):
-        return "1d"  # Can be "1h", "5m", etc. if supported
+        return "1d"  # Use "1h", "5m", etc., if supported by Surmount
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
@@ -28,8 +28,8 @@ class TradingStrategy(Strategy):
 
         def rsi(series, period):
             delta = series.diff()
-            gain = delta.where(delta > 0, 0).rolling(window=period).mean()
-            loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
+            gain = delta.where(delta > 0, 0).rolling(period).mean()
+            loss = -delta.where(delta < 0, 0).rolling(period).mean()
             rs = gain / loss
             return 100 - (100 / (1 + rs))
 
@@ -43,11 +43,11 @@ class TradingStrategy(Strategy):
             return 100 * (up - down) / (up + down)
 
         def stoch(close, high, low, period):
-            lowest_low = low.rolling(period).min()
-            highest_high = high.rolling(period).max()
-            return 100 * (close - lowest_low) / (highest_high - lowest_low)
+            lowest = low.rolling(period).min()
+            highest = high.rolling(period).max()
+            return 100 * (close - lowest) / (highest - lowest)
 
-        # === Indicator Calculations ===
+        # Indicators
         zlsma_len = 60
         ema1 = ema(close, zlsma_len)
         ema2 = ema(ema1, zlsma_len)
@@ -62,12 +62,11 @@ class TradingStrategy(Strategy):
         rsi_val = rsi(close, 14)
         trix = ema(ema(ema(close, 15), 15), 15)
         willr = stoch(close, high, low, 14)
-        mfi = stoch(close, high, low, 14)  # simplified MFI proxy
+        mfi = stoch(close, high, low, 14)
         stoch_k = stoch(close, high, low, 14)
         roc_val = roc(close, 12)
         cmo_val = cmo(close, 14)
 
-        # === Score ===
         score = (
             (close > zlsma).astype(int) +
             (ema_short > ema_long).astype(int) +
@@ -81,7 +80,6 @@ class TradingStrategy(Strategy):
             (cmo_val > 0).astype(int)
         )
 
-        # === Signal Generation ===
         signals = []
         for i in range(zlsma_len, len(data)):
             if not self.in_trade and score[i] >= self.score_limit:
