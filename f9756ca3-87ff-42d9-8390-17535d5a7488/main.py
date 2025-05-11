@@ -5,19 +5,13 @@ from surmount.base_class import Strategy
 
 class TradingStrategy(Strategy):
     def __init__(self):
-        self.name = "White Line Strategy PRO - Final Fix"
+        self.name = "White Line Strategy PRO - FINAL"
+        self.interval = "1d"          # ✅ must be a string attribute
+        self.assets = ["SPY"]         # ✅ must be a list attribute
         self.score_limit = 7
-        self.sl_offset = 0.005
+        self.sl_offset = 0.005        # 0.5% stop loss below ZLSMA
         self.in_trade = False
         self.stop_price = None
-
-    @property
-    def assets(self):
-        return ["SPY"]  # ✅ Return list of tickers
-
-    @property
-    def interval(self):
-        return "1d"     # ✅ Must be string, not method
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
@@ -48,11 +42,13 @@ class TradingStrategy(Strategy):
             highest = high.rolling(period).max()
             return 100 * (close - lowest) / (highest - lowest)
 
+        # === ZLSMA Calculation ===
         zlsma_len = 60
         ema1 = ema(close, zlsma_len)
         ema2 = ema(ema1, zlsma_len)
         zlsma = ema1 + (ema1 - ema2)
 
+        # === Other Indicators ===
         ema_short = ema(close, 20)
         ema_long = ema(close, 50)
 
@@ -67,6 +63,7 @@ class TradingStrategy(Strategy):
         roc_val = roc(close, 12)
         cmo_val = cmo(close, 14)
 
+        # === Indicator Score ===
         score = (
             (close > zlsma).astype(int) +
             (ema_short > ema_long).astype(int) +
@@ -80,6 +77,7 @@ class TradingStrategy(Strategy):
             (cmo_val > 0).astype(int)
         )
 
+        # === Signal Logic ===
         signals = []
         for i in range(zlsma_len, len(data)):
             if not self.in_trade and score[i] >= self.score_limit:
