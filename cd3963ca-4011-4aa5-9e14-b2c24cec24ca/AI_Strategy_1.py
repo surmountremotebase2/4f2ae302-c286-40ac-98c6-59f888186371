@@ -4,7 +4,7 @@ import pandas as pd
 
 class TradingStrategy(Strategy):
     def __init__(self, zlsmaLen=47, entry_threshold=7):
-        self.assets = ["YourAssetTickerHere"]  # Specify your asset
+        self.assets = ["SPY"]  # Specify your asset
         self.interval = "1day"  # Choose your data interval
         self.zlsmaLen = zlsmaLen
         self.entry_threshold = entry_threshold
