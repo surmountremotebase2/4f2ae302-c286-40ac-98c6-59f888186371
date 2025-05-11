@@ -20,9 +20,6 @@ class TradingStrategy(Strategy):
         return []
 
     def ZLSMA(self, prices, length=50):
-        """
-        Zero-Lag Smoothed Moving Average (ZLSMA approximation).
-        """
         ema1 = EMA(prices, length)
         ema2 = EMA(ema1, length)
         return [a + (a - b) for a, b in zip(ema1, ema2)]
@@ -30,9 +27,8 @@ class TradingStrategy(Strategy):
     def run(self, data):
         allocation = {}
 
-        for asset_data in data["ohlcv"]:
-            ticker = asset_data["ticker"]
-            prices = asset_data["close"]
+        for ticker, ohlcv in data["ohlcv"].items():
+            prices = ohlcv["close"]
             zlsma = self.ZLSMA(prices)
             macd = MACD(ticker, data["ohlcv"], 12, 26)
             rsi = RSI(prices, 14)
@@ -42,7 +38,7 @@ class TradingStrategy(Strategy):
             current_price = prices[-1]
             zlsma_value = zlsma[-1]
 
-            # ML-style score based on indicator signals
+            # Score logic
             score = 0
             if current_price > zlsma_value:
                 score += 1
@@ -51,19 +47,18 @@ class TradingStrategy(Strategy):
             if macd["MACD"][-1] > macd["signal"][-1]:
                 score += 1
 
-            # Entry condition: score threshold met
+            # Entry
             if score >= 3 and not self.stop_loss.get(ticker):
                 allocation[ticker] = 1.0
-                self.stop_loss[ticker] = zlsma_value * 0.99  # 1% below ZLSMA
+                self.stop_loss[ticker] = zlsma_value * 0.99
                 log(f"BUY {ticker} at {current_price} | Stop loss: {self.stop_loss[ticker]}")
 
-            # Exit condition: stop loss hit
+            # Exit
             elif self.stop_loss.get(ticker) and current_price <= self.stop_loss[ticker]:
                 allocation[ticker] = 0
                 del self.stop_loss[ticker]
                 log(f"SELL {ticker} at {current_price} (stop loss hit)")
 
-            # Otherwise: hold/no position
             else:
                 allocation[ticker] = 0
 
