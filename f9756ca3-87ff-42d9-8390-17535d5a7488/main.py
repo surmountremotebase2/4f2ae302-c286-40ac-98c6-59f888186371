@@ -10,11 +10,12 @@ class TradingStrategy(Strategy):
         self.in_trade = False
         self.stop_price = None
 
-    @property
     def assets(self):
-        return ["SPY"]  # Change this if needed
+        return ["SPY"]
 
-    
+    def interval(self):
+        return "1440min"  # ← Use this for daily candles on Surmount
+
     def run(self, data: pd.DataFrame):
         close = data["close"]
         high = data["high"]
@@ -44,7 +45,6 @@ class TradingStrategy(Strategy):
             highest = high.rolling(period).max()
             return 100 * (close - lowest) / (highest - lowest)
 
-        # === Indicator Calculations ===
         zlsma_len = 60
         ema1 = ema(close, zlsma_len)
         ema2 = ema(ema1, zlsma_len)
