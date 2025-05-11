@@ -3,73 +3,68 @@ import numpy as np
 from surmount.base_class import Strategy
 
 
-class IndicatorUtils:
-    @staticmethod
-    def ema(series, period):
-        return series.ewm(span=period, adjust=False).mean()
-
-    @staticmethod
-    def rsi(series, period):
-        delta = series.diff()
-        gain = delta.where(delta > 0, 0).rolling(period).mean()
-        loss = -delta.where(delta < 0, 0).rolling(period).mean()
-        rs = gain / loss
-        return 100 - (100 / (1 + rs))
-
-    @staticmethod
-    def roc(series, period):
-        return ((series - series.shift(period)) / series.shift(period)) * 100
-
-    @staticmethod
-    def cmo(series, period):
-        delta = series.diff()
-        up = delta.where(delta > 0, 0).rolling(period).sum()
-        down = -delta.where(delta < 0, 0).rolling(period).sum()
-        return 100 * (up - down) / (up + down)
-
-    @staticmethod
-    def stoch(close, high, low, period):
-        lowest = low.rolling(period).min()
-        highest = high.rolling(period).max()
-        return 100 * (close - lowest) / (highest - lowest)
-
-
 class TradingStrategy(Strategy):
     def __init__(self):
-        self.name = "White Line Strategy - Clean Syntax"
-        self.interval = "1d"         # Must be a string key Surmount recognizes
-        self.assets = ["SPY"]
+        self.name = "White Line Strategy PRO - Clean Function Syntax"
         self.score_limit = 7
-        self.sl_offset = 0.005       # 0.5%
+        self.sl_offset = 0.005
         self.in_trade = False
         self.stop_price = None
+
+    def assets(self):
+        return ["SPY"]  # ✅ MUST be method
+
+    def interval(self):
+        return "1d"     # ✅ MUST be method
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
         high = data["high"]
         low = data["low"]
 
-        # === Compute Indicators ===
+        def ema(series, period):
+            return series.ewm(span=period, adjust=False).mean()
+
+        def rsi(series, period):
+            delta = series.diff()
+            gain = delta.where(delta > 0, 0).rolling(period).mean()
+            loss = -delta.where(delta < 0, 0).rolling(period).mean()
+            rs = gain / loss
+            return 100 - (100 / (1 + rs))
+
+        def roc(series, period):
+            return ((series - series.shift(period)) / series.shift(period)) * 100
+
+        def cmo(series, period):
+            delta = series.diff()
+            up = delta.where(delta > 0, 0).rolling(period).sum()
+            down = -delta.where(delta < 0, 0).rolling(period).sum()
+            return 100 * (up - down) / (up + down)
+
+        def stoch(close, high, low, period):
+            lowest = low.rolling(period).min()
+            highest = high.rolling(period).max()
+            return 100 * (close - lowest) / (highest - lowest)
+
         zlsma_len = 60
-        ema1 = IndicatorUtils.ema(close, zlsma_len)
-        ema2 = IndicatorUtils.ema(ema1, zlsma_len)
+        ema1 = ema(close, zlsma_len)
+        ema2 = ema(ema1, zlsma_len)
         zlsma = ema1 + (ema1 - ema2)
 
-        ema_short = IndicatorUtils.ema(close, 20)
-        ema_long = IndicatorUtils.ema(close, 50)
+        ema_short = ema(close, 20)
+        ema_long = ema(close, 50)
 
-        macd_line = IndicatorUtils.ema(close, 12) - IndicatorUtils.ema(close, 29)
-        macd_hist = macd_line - IndicatorUtils.ema(macd_line, 9)
+        macd_line = ema(close, 12) - ema(close, 29)
+        macd_hist = macd_line - ema(macd_line, 9)
 
-        rsi_val = IndicatorUtils.rsi(close, 14)
-        trix = IndicatorUtils.ema(IndicatorUtils.ema(IndicatorUtils.ema(close, 15), 15), 15)
-        willr = IndicatorUtils.stoch(close, high, low, 14)
-        mfi = IndicatorUtils.stoch(close, high, low, 14)  # proxy for simplicity
-        stoch_k = IndicatorUtils.stoch(close, high, low, 14)
-        roc_val = IndicatorUtils.roc(close, 12)
-        cmo_val = IndicatorUtils.cmo(close, 14)
+        rsi_val = rsi(close, 14)
+        trix = ema(ema(ema(close, 15), 15), 15)
+        willr = stoch(close, high, low, 14)
+        mfi = stoch(close, high, low, 14)
+        stoch_k = stoch(close, high, low, 14)
+        roc_val = roc(close, 12)
+        cmo_val = cmo(close, 14)
 
-        # === Score Logic ===
         score = (
             (close > zlsma).astype(int) +
             (ema_short > ema_long).astype(int) +
@@ -83,7 +78,6 @@ class TradingStrategy(Strategy):
             (cmo_val > 0).astype(int)
         )
 
-        # === Signal Logic ===
         signals = []
         for i in range(zlsma_len, len(data)):
             if not self.in_trade and score[i] >= self.score_limit:
