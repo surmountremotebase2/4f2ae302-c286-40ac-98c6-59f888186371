@@ -5,18 +5,12 @@ from surmount.base_class import Strategy
 class TradingStrategy(Strategy):
     def __init__(self):
         self.name = "White Line Strategy PRO – ML Scoring"
+        self.interval = "1d"  # <-- define as attribute
+        self.assets = ["SPY"]  # <-- define as attribute
         self.score_limit = 7
         self.sl_offset = 0.005  # 0.5%
         self.in_trade = False
         self.stop_price = None
-
-    @property
-    def assets(self):
-        return ["SPY"]  # You can change this to other tickers
-
-    @property
-    def interval(self):
-        return "1d"  # Use "1h", "5m", etc., if supported by Surmount
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
@@ -47,7 +41,7 @@ class TradingStrategy(Strategy):
             highest = high.rolling(period).max()
             return 100 * (close - lowest) / (highest - lowest)
 
-        # Indicators
+        # === Indicator Calculations ===
         zlsma_len = 60
         ema1 = ema(close, zlsma_len)
         ema2 = ema(ema1, zlsma_len)
@@ -80,6 +74,7 @@ class TradingStrategy(Strategy):
             (cmo_val > 0).astype(int)
         )
 
+        # === Trade Logic ===
         signals = []
         for i in range(zlsma_len, len(data)):
             if not self.in_trade and score[i] >= self.score_limit:
