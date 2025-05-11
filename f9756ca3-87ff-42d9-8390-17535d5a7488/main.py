@@ -10,11 +10,13 @@ class TradingStrategy(Strategy):
         self.in_trade = False
         self.stop_price = None
 
+    @property
     def assets(self):
-        return ["SPY"]  # Your trading asset(s)
+        return ["SPY"]  # or any asset(s) you'd like
 
+    @property
     def interval(self):
-        return "1d"  # Candle resolution
+        return "1d"  # Must be string: "1d", "1h", "5m", etc.
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
