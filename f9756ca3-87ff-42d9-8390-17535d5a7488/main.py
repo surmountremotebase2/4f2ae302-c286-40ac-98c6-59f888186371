@@ -12,11 +12,11 @@ class TradingStrategy(Strategy):
 
     @property
     def assets(self):
-        return ["SPY"]  # or any asset(s) you'd like
+        return ["SPY"]  # You can change to any valid ticker
 
     @property
     def interval(self):
-        return "1d"  # Must be string: "1d", "1h", "5m", etc.
+        return "daily"  # Use "daily", not "1d", to match Surmount expectations
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
