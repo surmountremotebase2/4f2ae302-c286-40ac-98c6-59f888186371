@@ -14,10 +14,7 @@ class TradingStrategy(Strategy):
     def assets(self):
         return ["SPY"]  # Change this if needed
 
-    @property
-    def interval(self):
-        return "1h"  # Use "1h" or "5min" — avoid "1d" or "daily"
-
+    
     def run(self, data: pd.DataFrame):
         close = data["close"]
         high = data["high"]
