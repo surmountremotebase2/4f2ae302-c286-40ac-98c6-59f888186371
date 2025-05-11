@@ -6,15 +6,17 @@ class TradingStrategy(Strategy):
     def __init__(self):
         self.name = "White Line Strategy PRO – ML Scoring"
         self.score_limit = 7
-        self.sl_offset = 0.5 / 100
+        self.sl_offset = 0.5 / 100  # 0.5%
         self.in_trade = False
         self.stop_price = None
 
+    @property
     def assets(self):
-        return ["SPY"]  # Change to your target asset
+        return ["SPY"]  # Replace with your desired ticker(s)
 
+    @property
     def interval(self):
-        return "1d"  # Choose appropriate timeframe
+        return "1d"  # Can be "1h", "5m", etc. if supported
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
@@ -60,11 +62,12 @@ class TradingStrategy(Strategy):
         rsi_val = rsi(close, 14)
         trix = ema(ema(ema(close, 15), 15), 15)
         willr = stoch(close, high, low, 14)
-        mfi = stoch(close, high, low, 14)
+        mfi = stoch(close, high, low, 14)  # simplified MFI proxy
         stoch_k = stoch(close, high, low, 14)
         roc_val = roc(close, 12)
         cmo_val = cmo(close, 14)
 
+        # === Score ===
         score = (
             (close > zlsma).astype(int) +
             (ema_short > ema_long).astype(int) +
@@ -78,8 +81,9 @@ class TradingStrategy(Strategy):
             (cmo_val > 0).astype(int)
         )
 
+        # === Signal Generation ===
         signals = []
-        for i in range(60, len(data)):
+        for i in range(zlsma_len, len(data)):
             if not self.in_trade and score[i] >= self.score_limit:
                 self.in_trade = True
                 self.stop_price = zlsma[i] * (1 - self.sl_offset)
