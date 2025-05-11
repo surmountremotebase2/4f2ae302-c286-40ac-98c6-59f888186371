@@ -6,15 +6,15 @@ class TradingStrategy(Strategy):
     def __init__(self):
         self.name = "White Line Strategy PRO - ML Scoring"
         self.score_limit = 7
-        self.sl_offset = 0.005
+        self.sl_offset = 0.005  # 0.5%
         self.in_trade = False
         self.stop_price = None
 
     def assets(self):
-        return ["SPY"]  # Required as a method, not attribute
+        return ["SPY"]  # You can customize this list
 
     def interval(self):
-        return "1440min"  # Required as a method, not attribute
+        return "1d"  # Valid interval supported by Surmount
 
     def run(self, data: pd.DataFrame):
         close = data["close"]
@@ -59,11 +59,12 @@ class TradingStrategy(Strategy):
         rsi_val = rsi(close, 14)
         trix = ema(ema(ema(close, 15), 15), 15)
         willr = stoch(close, high, low, 14)
-        mfi = stoch(close, high, low, 14)
+        mfi = stoch(close, high, low, 14)  # simplified proxy
         stoch_k = stoch(close, high, low, 14)
         roc_val = roc(close, 12)
         cmo_val = cmo(close, 14)
 
+        # === Score Calculation ===
         score = (
             (close > zlsma).astype(int) +
             (ema_short > ema_long).astype(int) +
